@@ -3,6 +3,8 @@
 
 #include "mbed.h"
 
+//motor driver class for the three motors on mechanical system 
+
 class motorDriver {
 private:
     float pulsePerRev;
