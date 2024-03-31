@@ -49,11 +49,37 @@ void canMsgReceived() {
 
 int main()
 {
-    //LIMIT switches
+    //limit switches
     DigitalIn limitX (PIN_SW_X);
-    DigitalIn limitY (PIN_SW_Y1);
-    DigitalIn limitZ (PIN_SW_Y2);
+    DigitalIn limitY1 (PIN_SW_Y1);
+    DigitalIn limitY2 (PIN_SW_Y2);
     
+    //initialize motor
+    motorDriver motor1(PIN_DIR_1, PIN_ENA_1, PIN_PUL_1, motorDriver::PULSE_200_STEP_1); 
+    motorDriver motor2(PIN_DIR_2, PIN_ENA_2, PIN_PUL_2, motorDriver::PULSE_200_STEP_1); 
+    motorDriver motor3(PIN_DIR_3, PIN_ENA_3, PIN_PUL_3, motorDriver::PULSE_200_STEP_1); 
+
+    //calibration routine
+    motor1.setSpeed(0.15);
+    while(limitX == 0) {
+
+    }
+    motor1.setSpeed(0);
+    motor1.resetPosition(1000); // 300mm
+
+    motor2.setSpeed(0.15);
+    motor3.setSpeed(0.15);
+    while(limitY1 == 0 || limitY2 == 0) {
+
+    }
+    motor3.setSpeed(0);
+    motor2.setSpeed(0);
+    motor2.resetPosition(1000); // 300mm
+    motor3.resetPosition(1000); // 300mm
+
+
+
+
     //this board receives communication, doesn't send 
             
     can1.frequency(1000000); // set CAN bit rate to 1Mbps
@@ -68,10 +94,6 @@ int main()
     //     wait_us(200);
     // }
 
-    //test motor drivers?
-    motorDriver motor1(PIN_DIR_1, PIN_ENA_1, PIN_PUL_1, motorDriver::PULSE_200_STEP_1); 
-    motorDriver motor2(PIN_DIR_2, PIN_ENA_2, PIN_PUL_2, motorDriver::PULSE_200_STEP_1); 
-    motorDriver motor3(PIN_DIR_3, PIN_ENA_3, PIN_PUL_3, motorDriver::PULSE_200_STEP_1); 
 
     //level conversion enable pin
     // Pull OE low to place all outputs in Tri-state mode/high impedence Referenced to VCCA
@@ -87,15 +109,18 @@ int main()
     float kd = 0.05;
     PIDController motionControl(kp, ki, kd); // Example gains
 
-    double reachPoint = 100.0;
-    double measuredPoint = 80.0;
+    float reachPoint = 100.0;
+    float measuredPoint = 80.0;
 
     //test 
     for (int i = 0; i < 50; ++i) {
-        double controlSignal = motionControl.calculateControlSignal(reachPoint, measuredPoint);
+        float controlSignal = motionControl.calculateControlSignal(reachPoint, measuredPoint);
         measuredPoint += controlSignal;
         printf("control signal:%f \n", controlSignal);
     }
+
+    //Automatically setting the direction of the motor controllers based ont he return value from the PID controller 
+
 
 
 

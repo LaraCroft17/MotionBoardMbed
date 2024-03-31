@@ -1,69 +1,49 @@
 #include "motorDriver.hpp"
 
-motorDriver::motorDriver(PinName DIR, PinName ENA, PinName PUL, pulseRev pulseValue): pulsePerRev(0), direction(DIR), enable(ENA), step(PUL) { 
 
-    switch (pulseValue) {
-        case PULSE_NC_STEP_NC:
-            pulsePerRev = 0.0f;  
-            break;
-        case PULSE_200_STEP_1:
-            pulsePerRev = 200.0f;
-            break;
-        case PULSE_400_STEP_2A:
-            pulsePerRev = 400.0f;
-            break;
-        case PULSE_400_STEP_2B:  //any difference between a and b??
-            pulsePerRev = 400.0f;
-            break;
-        case PULSE_800_STEP_4:
-            pulsePerRev = 800.0f;
-            break;
-        case PULSE_1600_STEP_8:
-            pulsePerRev = 1600.0f;
-            break;
-        case PULSE_3200_STEP_16:
-            pulsePerRev = 3200.0f;
-            break;
-        case PULSE_6400_STEP_32:
-            pulsePerRev = 6400.0f;
-            break;
-    }
-
+motorDriver::motorDriver(PinName DIR, PinName ENA, PinName PUL, bool invertDirection): direction(DIR), enable(ENA), step(PUL), invertDirection(invertDirection) { 
+    maxStepCount = 1000000;
+    steps = 500000;
 }
 
-void motorDriver::setDirection(bool dir) {
-    //wait after PUL just in case
-    wait_us(5);
-
-    //1 for clockwise 0 for counterclockwise
-    if(dir) {
-        direction = 1;
-    } else {
-        direction = 0;
+void motorDriver::stepTicker() {
+    if (steps <= 0 || steps >= maxStepCount) {
+        return;
     }
 
+    step = !step;
+    steps += stepDirection;
 }
 
-void motorDriver::oneStep(int delay_us) {
-    //make only one step given the delay by the user 
-    step = 1;
-    wait_us(delay_us);
-    step = 0;
-    wait_us(delay_us);
-}
-
-void motorDriver::oneRev (int delay_us) {
-    for (int i = 0; i < pulsePerRev; i++) {
-        step = 1;
-        wait_us(delay_us);
-        step = 0;
-        wait_us(delay_us);
+void motorDriver::setSpeed(float speed) {
+    if ((speed > 0) != (direction ^ invertDirection)) {
+        direction = (speed > 0) ^ invertDirection;
     }
+    //check the limits 
+    if(speed > 1) {
+        speed = 1;
+        stepDirection = 1;
+    } else if (speed < -1) {
+        speed = -1;
+        stepDirection = -1;
+    }
+    
+    t.detach();
+
+    // for our motors, 500rpm is max recommended and 200 steps per revolution.
+    // so, min delay between steps is 0.6ms between steps, but half this is needed
+    // for toggling step signal.
+
+    if (abs(speed) > 0.01) { //making sure the function doesn't return inf
+        t.attach_us(callback(this, &motorDriver::stepTicker), abs(300/speed));
+    } 
 }
 
-void motorDriver::run(int revCount, int delay_us) {
+int motorDriver::getPosition() {
+    return steps;
+}
 
-    for (int i =0; i < revCount * pulsePerRev; i++) {
-        oneStep(delay_us);
-    }
+void motorDriver::resetPosition(int maxStepCount) {
+    steps = 0;
+    this->maxStepCount = maxStepCount;
 }

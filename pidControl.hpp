@@ -9,7 +9,7 @@ private:
 public:
     PIDController(float p, float i, float d):Kp(p), Ki(i), Kd(d), prevError(0), integral(0) {}
     
-    double calculateControlSignal(float reach, float currValue) {
+    float calculateControlSignal(float reach, float currValue) {
         float error = reach - currValue;
         integral += error; //sum 
         float derivative = error - prevError; //difference
