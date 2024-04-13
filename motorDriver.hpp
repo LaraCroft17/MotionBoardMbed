@@ -27,6 +27,9 @@ public:
 
     void resetPosition(int maxStepCount);
 
+    void testMultipleRounds(int count, float stepCount, float speed);
+
+    void takeStep(int stepCount, float speed); //to get rid of the small step change in between the motors on the same axes 
 
 };
 
