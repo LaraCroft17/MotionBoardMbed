@@ -20,7 +20,7 @@ void motorDriver::stepTicker() {
 }
 
 void motorDriver::setSpeed(float speed) {
-    direction = (speed > 0) ^ invertDirection;
+    direction = (speed > 0) ^ invertDirection;   // positive speed: 1 ^ true = 0, negative speed: 0 ^ true = 1
     printf("direction: %d\n", direction.read());
 
     //check the limits 
@@ -63,14 +63,26 @@ void motorDriver::takeStep(int stepCount, float speed) {
     } else if (speed < -1) {
         speed = -1;
     }
-    int delay = abs(80/speed);
 
+    if (speed > 0) {
+        stepDirection = 1;
+    } else {
+        stepDirection = -1;
+    }
+    
+    int delay = abs(80/speed);  
+    direction = (speed > 0) ^ invertDirection;   // positive speed: 1 ^ true = 0, negative speed: 0 ^ true = 1
+    //direction = stepDirection;
     //make only one step given the delay by the user    
     for (int i = 0; i < stepCount; i++) {
         step = 1;
         wait_us(delay);
         step = 0;
         wait_us(delay);
+        steps += stepDirection;
+        if (steps < 0 || steps >= maxStepCount) {
+            return;
+        }
     }
 }
 
@@ -82,16 +94,19 @@ void motorDriver::testMultipleRounds(int count, float stepCount, float speed) {
     } else if (speed < -1) {
         speed = -1;
     } 
-    int delay = abs(80/speed);
-
-    for (int i = 0; i < count; i++) { //how many times motor will go and come back 
+    //int delay = abs(80/speed);
+    int i, j;
+    for (i = 0; i < count; i++) { //how many times motor will go and come back 
         //go to right 
-        direction = 1; 
-        takeStep(stepCount, delay);
+        for (j = 0; j < stepCount; j++) {
+            takeStep(stepCount, speed);
+        }
         wait_us(1000);
-        direction = 0;
-        takeStep(stepCount, delay);
-        printf("Round %d", i);
+        //go to left
+        for (j = 0; j < stepCount; j++) {
+            takeStep(stepCount, speed);
+        }
+        printf("Round %d completed\n", i);
     }
 
     printf("Test mutltiple rounds completed");
