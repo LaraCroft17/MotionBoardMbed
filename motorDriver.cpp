@@ -21,7 +21,8 @@ void motorDriver::stepTicker() {
 
 void motorDriver::setSpeed(float speed) {
     direction = (speed > 0) ^ invertDirection;   // positive speed: 1 ^ true = 0, negative speed: 0 ^ true = 1
-    printf("direction: %d\n", direction.read());
+    //printf("direction: %d\n", direction.read());
+    //wait_us(50000);
 
     //check the limits 
     if(speed > 1) {
